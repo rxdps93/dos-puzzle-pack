@@ -1,27 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <i86.h>
-
-unsigned short notes[] = {
-        19327 ,        /* C b             */
-        18242 ,        /* C               */
-        17218 ,        /* C #   ( D b )  */
-        16252 ,        /* D               */
-        15340 ,        /* D #   ( E b )  */
-        14479 ,        /* E      ( F b )  */
-        13666 ,        /* F      ( E # )  */
-        12899 ,        /* F #   ( G b )  */
-        12175 ,        /* G               */
-        11492 ,        /* G #   ( A b )  */
-        10847 ,        /* A               */
-        10238 ,        /* A #   ( B b )  */
-        9664 ,         /* B      ( C b )  */
-        9121 ,         /* B #             */
-        0
-};
-
-#define FACTOR  1193180
-#define OCTAVE  4
+#include "music.h"
 
 int main(int argc, char **argv) {
 
@@ -54,16 +34,66 @@ int main(int argc, char **argv) {
         selection = atoi(&c);
     }
 
-    if (selection != 4) {
-        printf("We are playing %s\n", opts[selection - 1]);
-    } else {
-        printf("Bye!\n");
+    // if (selection != 4) {
+    //     printf("We are playing %s\n", opts[selection - 1]);
+    // } else {
+    //     printf("Bye!\n");
+    // }
+
+    note_t scale[] = {
+        { PITCH_C_F, OCTAVE_HIGH, WHOLE },
+        { PITCH_C, OCTAVE_HIGH, HALF },
+        { PITCH_C_S, OCTAVE_HIGH, HALF },
+        { PITCH_D, OCTAVE_HIGH, QUARTER },
+        { PITCH_D_S, OCTAVE_HIGH, QUARTER },
+        { PITCH_E, OCTAVE_HIGH, QUARTER },
+        { PITCH_F, OCTAVE_HIGH, QUARTER },
+        { PITCH_F_S, OCTAVE_HIGH, EIGHTH },
+        { PITCH_G, OCTAVE_HIGH, EIGHTH },
+        { PITCH_G_S, OCTAVE_HIGH, EIGHTH },
+        { PITCH_A, OCTAVE_HIGH, EIGHTH },
+        { PITCH_A_S, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_B, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_B_S, OCTAVE_HIGH, SIXTEENTH }
+    };
+
+    note_t ss2[] = {
+        { PITCH_A, OCTAVE_HIGH, SIXTEENTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH},
+        { PITCH_E, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_D, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_C_S, OCTAVE_HIGH, EIGHTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH},
+        { PITCH_C_S, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_D, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_E, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_F_S, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_G_S, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_E, OCTAVE_HIGH, EIGHTH },
+        { REST, OCTAVE_HIGH, EIGHTH },
+
+        { PITCH_F_S, OCTAVE_HIGH, SIXTEENTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_E, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_D, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_C_S, OCTAVE_HIGH, SIXTEENTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_C_S, OCTAVE_HIGH, SIXTEENTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_B, OCTAVE_MID, SIXTEENTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_C_S, OCTAVE_HIGH, SIXTEENTH },
+        { REST, OCTAVE_HIGH, SIXTEENTH },
+        { PITCH_D, OCTAVE_HIGH, EIGHTH },
+        { REST, OCTAVE_HIGH, EIGHTH}
+    };
+
+    for(int i = 0; i < (sizeof scale / sizeof scale[0]); i++) {
+        play_note(scale[i], 200);
     }
 
-    for(int i = 0; notes[i]; ++i) {
-        sound( FACTOR / (notes[i] / (1 << OCTAVE)) );
-        delay(125);
-        nosound();
+    for(int i = 0; i < (sizeof ss2 / sizeof ss2[0]); i++) {
+        play_note(ss2[i], 100);
     }
 
     return 0;
