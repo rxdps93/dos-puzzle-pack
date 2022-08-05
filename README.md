@@ -10,6 +10,6 @@ Will start with
 * MATHDOKU
     * Better known as KenKen
 
-OpenWatcomC 2.0 Compiler:
+OpenWatcomC 2.0 Compiler (I'll do the makefile eventually):
 
-`wcl -za99 dpp`
+`wcl -za99 -aa dpp.c music.c -l=music.h`
