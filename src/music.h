@@ -1,5 +1,5 @@
-#ifndef MUSIC_H
-#define MUSIC_H
+#ifndef MUSIC_H_
+#define MUSIC_H_
 
 #define FACTOR      1193180
 

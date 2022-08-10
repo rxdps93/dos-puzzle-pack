@@ -1,4 +1,4 @@
-#include <i86.h>
+#include <dos.h>
 #include "music.h"
 
 void play_note(note_t note, int bpm) {
