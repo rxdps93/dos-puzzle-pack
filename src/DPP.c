@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "curses.h"
+#include <curses.h>
 #include "puzzles.h"
 
 int main(void) {
