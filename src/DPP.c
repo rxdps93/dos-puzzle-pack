@@ -1,16 +1,21 @@
 #include <conio.h>
 #include <graph.h>
 #include "puzzles.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 
+#define GAMES       3
+
 /* Background Colors */
 #define SCREEN_BK   1
 #define MENU_BK     3
+#define SHADOW      0
 
 /* Foreground/Text Colors */
 #define MENU_FG     0
+#define MENU_HL     16
 
 void column_header() {
     _settextwindow(7, 1, 7, 80);
@@ -29,7 +34,7 @@ void column_header() {
 }
 
 void row_header() {
-    _settextwindow(1, 80, 25, 80);
+    _settextwindow(1, 31, 25, 31);
     _setbkcolor(4);
     _clearscreen(_GWINDOW);
     _settextcolor(14);
@@ -37,6 +42,18 @@ void row_header() {
     for (int i = 0; i < 24; i++) {
         _settextposition(i + 1, 1);
         _outtext(itoa(i % 10, buf, 10));
+    }
+}
+
+void highlight_option(int cur, int prev, int count, char **opts) {
+    _settextposition((2 * cur) + 3, ((18 - strlen(opts[cur])) / 2) + 1);
+    _settextcolor(MENU_HL);
+    _outtext(opts[cur]);
+
+    if (prev != -1) {
+        _settextposition((2 * prev) + 3, ((18 - strlen(opts[prev])) / 2) + 1);
+        _settextcolor(MENU_FG);
+        _outtext(opts[prev]);
     }
 }
 
@@ -48,7 +65,7 @@ int menu(int count, ...) {
 
     puzzle_t *temp;
     char **names;
-    names = malloc(count * sizeof(char *));
+    names = malloc((count + 1) * sizeof(char *));
 
     for (int i = 0; i < count; i++) {
         temp = va_arg(valist, puzzle_t *);
@@ -56,33 +73,53 @@ int menu(int count, ...) {
         strcpy(names[i], temp->name);
     }
     va_end(valist);
+    names[count] = "QUIT";
+
+    // Drop Shadow
+    _settextwindow(9, 33, 17, 50);
+    _setbkcolor(SHADOW);
+    _clearscreen(_GWINDOW);
 
     // Message Box
     _settextwindow(8, 32, 16, 49);
     _setbkcolor(MENU_BK);
     _clearscreen(_GWINDOW);
 
-    // Static Text
+    // Header Text
     _settextcolor(MENU_FG);
     _settextposition(1, 2);
     _outtext("CHOOSE AN OPTION");
-    _settextposition(9, 8);
-    _outtext("QUIT");
 
-    // Games
-    for (int i = 0; i < count; i++) {
+    // Options
+    for (int i = 0; i < count + 1; i++) {
         _settextposition((2 * i) + 3, ((18 - strlen(names[i])) / 2) + 1);
         _outtext(names[i]);
     }
 
-    getch();
+    int c1 = 0;
+    int highlighted = 0;
+    highlight_option(highlighted, -1, count + 1, names);
+    while (c1 != 13) {
+
+        if (kbhit()) {
+            c1 = getch();
+
+            if ((c1 == 72) && (highlighted > 0)) {
+                highlight_option(highlighted - 1, highlighted, count + 1, names);
+                highlighted--;
+            } else if ((c1 == 80) && (highlighted < count)) {
+                highlight_option(highlighted + 1, highlighted, count + 1, names);
+                highlighted++;
+            }
+        }
+    }
 
     for (int i = 0; i < count; i++) {
         free(names[i]);
     }
     free(names);
 
-    return 0;
+    return highlighted;
 }
 
 int main(void) {
@@ -98,14 +135,21 @@ int main(void) {
     puzzle_t nonogram = { NONOGRAM, "NONOGRAM" };
     puzzle_t mathdoku = { MATHDOKU, "MATHDOKU" };
 
-    column_header();
-    row_header();
+    puzzle_t **puzzles = malloc(GAMES * sizeof(puzzle_t *));
+    puzzles[0] = &wordos;
+    puzzles[1] = &nonogram;
+    puzzles[2] = &mathdoku;
 
-    menu(3, &wordos, &nonogram, &mathdoku);
+    // column_header();
+    // row_header();
+
+    int option = menu(3, &wordos, &nonogram, &mathdoku);
 
     _displaycursor(_GCURSORON);
     _setvideomode(_DEFAULTMODE);
     _clearscreen(_GCLEARSCREEN);
+
+    printf("You selected: %s\n", option < GAMES ? puzzles[option]->name : "QUIT");
 
     // printf("%s: %s\n", wordos.name, puzzle_description(&wordos));
     // printf("%s: %s\n", nonogram.name, puzzle_description(&nonogram));
@@ -115,5 +159,6 @@ int main(void) {
     // printf("%s\n", init_puzzle(&nonogram));
     // printf("%s\n", init_puzzle(&mathdoku));
 
+    free(puzzles);
     return 0;
 }
