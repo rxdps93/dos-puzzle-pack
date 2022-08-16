@@ -16,7 +16,7 @@
 
 /* Foreground/Text Colors */
 #define MENU_FG     0
-#define MENU_HL     16
+#define MENU_HL     31
 #define TITLE       15
 
 // void column_header() {
