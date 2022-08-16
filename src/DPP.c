@@ -19,33 +19,31 @@
 #define MENU_HL     31
 #define TITLE       15
 
-// void column_header() {
-//     _settextwindow(7, 1, 7, 80);
-//     _setbkcolor(2);
-//     _clearscreen(_GWINDOW);
-//     _settextcolor(15);
-//     char buf[2];
-//     for (int i = 0; i < 8; i++) {
-//         for (int j = 1; j < 11; j++) {
-//             if (i == 7 && j == 10) {
-//                 break;
-//             }
-//             _outtext(itoa(j < 10 ? j : 0, buf, 10));
-//         }
-//     }
-// }
+void column_header() {
+    _settextwindow(7, 1, 7, 80);
+    _setbkcolor(2);
+    _clearscreen(_GWINDOW);
+    _settextcolor(15);
+    for (int i = 0; i < 8; i++) {
+        for (int j = 1; j < 11; j++) {
+            if (i == 7 && j == 10) {
+                break;
+            }
+            putch(j < 10 ? j : 0);
+        }
+    }
+}
 
-// void row_header() {
-//     _settextwindow(1, 31, 25, 31);
-//     _setbkcolor(4);
-//     _clearscreen(_GWINDOW);
-//     _settextcolor(14);
-//     char buf[2];
-//     for (int i = 0; i < 24; i++) {
-//         _settextposition(i + 1, 1);
-//         _outtext(itoa(i % 10, buf, 10));
-//     }
-// }
+void row_header() {
+    _settextwindow(1, 31, 25, 31);
+    _setbkcolor(4);
+    _clearscreen(_GWINDOW);
+    _settextcolor(14);
+    for (int i = 0; i < 24; i++) {
+        _settextposition(i + 1, 1);
+        putch(i % 10);
+    }
+}
 
 void show_title() {
     _settextcolor(TITLE);
@@ -178,21 +176,14 @@ int main(void) {
 
     int option = menu(GAMES, &wordos, &nonogram, &mathdoku);
 
+    if (option < GAMES) {
+        printf("%s\n", init_puzzle(puzzles[option]));
+        // init_puzzle(puzzles[option]);
+    }
+
     _displaycursor(_GCURSORON);
     _setvideomode(_DEFAULTMODE);
     _clearscreen(_GCLEARSCREEN);
-
-    if (option < GAMES) {
-        printf("%s\n", init_puzzle(puzzles[option]));
-    }
-
-    // printf("%s: %s\n", wordos.name, puzzle_description(&wordos));
-    // printf("%s: %s\n", nonogram.name, puzzle_description(&nonogram));
-    // printf("%s: %s\n", mathdoku.name, puzzle_description(&mathdoku));
-
-    // printf("%s\n", init_puzzle(&wordos));
-    // printf("%s\n", init_puzzle(&nonogram));
-    // printf("%s\n", init_puzzle(&mathdoku));
 
     free(puzzles);
     return 0;
