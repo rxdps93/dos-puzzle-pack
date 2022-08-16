@@ -1,3 +1,4 @@
+#include <dos.h>
 #include <conio.h>
 #include <graph.h>
 #include "puzzles.h"
@@ -16,36 +17,57 @@
 /* Foreground/Text Colors */
 #define MENU_FG     0
 #define MENU_HL     16
+#define TITLE       15
 
-void column_header() {
-    _settextwindow(7, 1, 7, 80);
-    _setbkcolor(2);
-    _clearscreen(_GWINDOW);
-    _settextcolor(15);
-    char buf[2];
-    for (int i = 0; i < 8; i++) {
-        for (int j = 1; j < 11; j++) {
-            if (i == 7 && j == 10) {
-                break;
-            }
-            _outtext(itoa(j < 10 ? j : 0, buf, 10));
-        }
-    }
+// void column_header() {
+//     _settextwindow(7, 1, 7, 80);
+//     _setbkcolor(2);
+//     _clearscreen(_GWINDOW);
+//     _settextcolor(15);
+//     char buf[2];
+//     for (int i = 0; i < 8; i++) {
+//         for (int j = 1; j < 11; j++) {
+//             if (i == 7 && j == 10) {
+//                 break;
+//             }
+//             _outtext(itoa(j < 10 ? j : 0, buf, 10));
+//         }
+//     }
+// }
+
+// void row_header() {
+//     _settextwindow(1, 31, 25, 31);
+//     _setbkcolor(4);
+//     _clearscreen(_GWINDOW);
+//     _settextcolor(14);
+//     char buf[2];
+//     for (int i = 0; i < 24; i++) {
+//         _settextposition(i + 1, 1);
+//         _outtext(itoa(i % 10, buf, 10));
+//     }
+// }
+
+void show_title() {
+    _settextcolor(TITLE);
+    _settextposition(2, 5);
+    _outtext(" ____   ___  ____    ____                _        ____            _   ");
+    _settextposition(3, 5);
+    _outtext("|  _ \\ / _ \\/ ___|  |  _ \\ _   _ _______| | ___  |  _ \\ __ _  ___| | __");
+    _settextposition(4, 5);
+    _outtext("| | | | | | \\___ \\  | |_) | | | |_  /_  / |/ _ \\ | |_) / _` |/ __| |/ /");
+    _settextposition(5, 5);
+    _outtext("| |_| | |_| |___) | |  __/| |_| |/ / / /| |  __/ |  __/ (_| | (__|   < ");
+    _settextposition(6, 5);
+    _outtext("|____/ \\___/|____/  |_|    \\__,_/___/___|_|\\___| |_|   \\__,_|\\___|_|\\_\\");
 }
 
-void row_header() {
-    _settextwindow(1, 31, 25, 31);
-    _setbkcolor(4);
-    _clearscreen(_GWINDOW);
-    _settextcolor(14);
-    char buf[2];
-    for (int i = 0; i < 24; i++) {
-        _settextposition(i + 1, 1);
-        _outtext(itoa(i % 10, buf, 10));
-    }
+void play_note(unsigned short freq, unsigned int duration) {
+    sound(freq);
+    delay(duration);
+    nosound();
 }
 
-void highlight_option(int cur, int prev, int count, char **opts) {
+void highlight_option(int cur, int prev, char **opts) {
     _settextposition((2 * cur) + 3, ((18 - strlen(opts[cur])) / 2) + 1);
     _settextcolor(MENU_HL);
     _outtext(opts[cur]);
@@ -54,6 +76,8 @@ void highlight_option(int cur, int prev, int count, char **opts) {
         _settextposition((2 * prev) + 3, ((18 - strlen(opts[prev])) / 2) + 1);
         _settextcolor(MENU_FG);
         _outtext(opts[prev]);
+
+        play_note(440, 100);
     }
 }
 
@@ -75,13 +99,16 @@ int menu(int count, ...) {
     va_end(valist);
     names[count] = "QUIT";
 
+    // Title
+    show_title();
+
     // Drop Shadow
-    _settextwindow(9, 33, 17, 50);
+    _settextwindow(12, 33, 20, 50);
     _setbkcolor(SHADOW);
     _clearscreen(_GWINDOW);
 
     // Message Box
-    _settextwindow(8, 32, 16, 49);
+    _settextwindow(11, 32, 19, 49);
     _setbkcolor(MENU_BK);
     _clearscreen(_GWINDOW);
 
@@ -98,21 +125,27 @@ int menu(int count, ...) {
 
     int c1 = 0;
     int highlighted = 0;
-    highlight_option(highlighted, -1, count + 1, names);
-    while (c1 != 13) {
+    highlight_option(highlighted, -1, names);
+    while (c1 != 13 && c1 != 27) {
 
         if (kbhit()) {
             c1 = getch();
 
             if ((c1 == 72) && (highlighted > 0)) {
-                highlight_option(highlighted - 1, highlighted, count + 1, names);
+                highlight_option(highlighted - 1, highlighted, names);
                 highlighted--;
             } else if ((c1 == 80) && (highlighted < count)) {
-                highlight_option(highlighted + 1, highlighted, count + 1, names);
+                highlight_option(highlighted + 1, highlighted, names);
                 highlighted++;
+            }
+
+            if (c1 == 27) {
+                highlighted = count;
             }
         }
     }
+    
+    play_note(highlighted == count ? 220 : 880, 100);
 
     for (int i = 0; i < count; i++) {
         free(names[i]);
@@ -143,13 +176,15 @@ int main(void) {
     // column_header();
     // row_header();
 
-    int option = menu(3, &wordos, &nonogram, &mathdoku);
+    int option = menu(GAMES, &wordos, &nonogram, &mathdoku);
 
     _displaycursor(_GCURSORON);
     _setvideomode(_DEFAULTMODE);
     _clearscreen(_GCLEARSCREEN);
 
-    printf("You selected: %s\n", option < GAMES ? puzzles[option]->name : "QUIT");
+    if (option < GAMES) {
+        printf("%s\n", init_puzzle(puzzles[option]));
+    }
 
     // printf("%s: %s\n", wordos.name, puzzle_description(&wordos));
     // printf("%s: %s\n", nonogram.name, puzzle_description(&nonogram));
