@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <conio.h>
+#include <string.h>
 
 #define WORD_LEN    5
 
@@ -27,9 +28,15 @@ char *get_word(FILE *fp, int line) {
 
 void enter_guess(char *guess) {
 
-    _settextposition(5, 13);
-    // _outtext("_ _ _ _ _");
+    /* Guess Area */
+    _settextwindow(3, 2, 7, 25);
+    _setbkcolor(1);
+    _clearscreen(_GWINDOW);
+    _settextcolor(15);
+    _settextposition(2, 5);
+    _outtext("Enter your guess");
 
+    _settextposition(4, 10);
     for (int letter = 0; letter < WORD_LEN; letter++) {
         putch('_');
     }
@@ -37,7 +44,7 @@ void enter_guess(char *guess) {
     int letter = 0;
     int c;
     int loop = 1;
-    _settextposition(5, 13);
+    _settextposition(4, 10);
     do {
         c = getch();
         if (c == 0) {
@@ -50,7 +57,7 @@ void enter_guess(char *guess) {
             }
 
             if ((c >= 'A') && (c <= 'Z')) {
-                _settextposition(5, 13 + letter);
+                _settextposition(4, 10 + letter);
                 putch(c);
                 guess[letter++] = c;
             }
@@ -63,9 +70,9 @@ void enter_guess(char *guess) {
                 letter = 0;
             }
 
-            _settextposition(5, 13 + letter);
+            _settextposition(4, 10 + letter);
             putch('_');
-            _settextposition(5, 13 + letter);
+            _settextposition(4, 10 + letter);
         }
 
         if ((c == 13) && (letter == WORD_LEN)) {
@@ -77,33 +84,50 @@ void enter_guess(char *guess) {
     guess[WORD_LEN] = '\0';
 }
 
+void title_bar(char *text) {
+    _settextwindow(1, 1, 1, 80);
+    _setbkcolor(3);
+    _clearscreen(_GWINDOW);
+    _settextcolor(15);
+    // _settextposition(1, 24);
+    _settextposition(1, (80 - strlen(text)) / 2);
+    _outtext(text);
+}
+
+void print_guess(char *guess, int guess_num) {
+
+    int test_colors[5] = { 0, 2, 6, 2, 0 };
+    char title[30];
+    for (int ltr = 0; ltr < WORD_LEN; ltr++) {
+        _settextwindow(3 + (guess_num * 4), 31 + (ltr * 4), 5 + (guess_num * 4), 33 + (ltr * 4));
+        _setbkcolor(test_colors[ltr]);
+        _clearscreen(_GWINDOW);
+        _settextcolor(15);
+        _settextposition(2, 2);
+        putch(guess[ltr]);
+
+        snprintf(title, 30, "You have %d guesses remaining!", 5 - guess_num);
+        title_bar(title);
+    }
+}
+
 void play(char *word) {
     _settextwindow(1, 1, 25, 80);
     _setbkcolor(7);
     _clearscreen(_GWINDOW);
 
-    /* Title Bar */
-    _settextwindow(1, 1, 1, 80);
-    _setbkcolor(3);
-    _clearscreen(_GWINDOW);
-    _settextcolor(15);
-    _settextposition(1, 24);
-    _outtext("WORDOS: Solve for the Secret Word!");
+    title_bar("WORDOS: Solve for the Secret Word!");
 
-    /* Test Area */
-    _settextwindow(4, 25, 10, 56);
-    _setbkcolor(1);
-    _clearscreen(_GWINDOW);
-    _settextcolor(15);
-    _settextposition(2, 5);
-    _outtext("Please enter your guess:");
+    for (int g = 0; g < 6; g++) {
+        char guess[WORD_LEN + 1];
+        enter_guess(&guess);
 
-    char guess[WORD_LEN + 1];
-    enter_guess(&guess);
+        // _settextposition(5, 13);
+        // _settextcolor(3);
+        // _outtext(guess);
 
-    _settextposition(6, 13);
-    _settextcolor(3);
-    _outtext(guess);
+        print_guess(guess, g);
+    }
 
     getch();
 }
