@@ -8,6 +8,10 @@
 
 #define WORD_LEN    5
 
+#define N_MATCH     0
+#define P_MATCH     6
+#define F_MATCH     2
+
 int count_lines(FILE *fp) {
     int c;
     int count = 0;
@@ -94,10 +98,9 @@ void title_bar(char *text) {
     _outtext(text);
 }
 
-void print_guess(char *guess, int guess_num) {
+void print_guess(int *test_colors, char *guess, int guess_num) {
 
-    int test_colors[5] = { 0, 2, 6, 2, 0 };
-    char title[30];
+    // char title[30];
     for (int ltr = 0; ltr < WORD_LEN; ltr++) {
         _settextwindow(3 + (guess_num * 4), 31 + (ltr * 4), 5 + (guess_num * 4), 33 + (ltr * 4));
         _setbkcolor(test_colors[ltr]);
@@ -106,8 +109,57 @@ void print_guess(char *guess, int guess_num) {
         _settextposition(2, 2);
         putch(guess[ltr]);
 
-        snprintf(title, 30, "You have %d guesses remaining!", 5 - guess_num);
-        title_bar(title);
+        // snprintf(title, 30, "You have %d guesses remaining!", 5 - guess_num);
+        // title_bar(title);
+    }
+}
+
+void compare_guess(int *result, char *guess, char *word) {
+    // result[0] = N_MATCH;
+    // result[1] = P_MATCH;
+    // result[2] = F_MATCH;
+    // result[3] = N_MATCH;
+    // result[4] = F_MATCH;
+
+    int lc;
+    for (int gl = 0; gl < WORD_LEN; gl++) {
+        printf("comparing %c to %c\n", guess[gl], word[gl]);
+        /* Check for green */
+        if (guess[gl] == word[gl]) {
+            result[gl] = F_MATCH;
+            printf("\tposition %d was a match\n", gl);
+        } else {
+            /* Check for yellow */
+            lc = 0;
+            for (int wl = 0; wl < WORD_LEN; wl++) {
+                if (guess[gl] == word[wl]) {
+                    result[gl] = P_MATCH;
+                    lc++;
+                    printf("\tposition %d is yellow matching word %d\n", gl, wl);
+                    break;
+                }
+            }
+
+            /*
+                Handle duplicate yellow letters
+                Example word: SOGGY
+                'G' guessed in position 3 or 4 obviously ought to be green
+                'G' in any other position ought to be yellow
+                Once there have been 2 'G's any other that should be yellow ought to be black
+
+                Examples:
+                    GROSS = YBYYB
+                    FLOGS = BBYGY
+                    GROGS = YBYGY
+                    GROGG = YBYGB
+            */
+
+            /* Mark as black */
+            if (lc == 0) {
+                printf("\tno bueno\n");
+                result[gl] = N_MATCH;
+            }
+        }
     }
 }
 
@@ -116,17 +168,22 @@ void play(char *word) {
     _setbkcolor(7);
     _clearscreen(_GWINDOW);
 
-    title_bar("WORDOS: Solve for the Secret Word!");
+    char title[30];
+    snprintf(title, 30, "The new secret word is %s!", word);
+    title_bar(title);
+    // title_bar("WORDOS: Solve for the Secret Word!");
 
+    char guess[WORD_LEN + 1];
+    int cmp[WORD_LEN];
     for (int g = 0; g < 6; g++) {
-        char guess[WORD_LEN + 1];
         enter_guess(&guess);
+        compare_guess(&cmp, &guess, word);
 
         // _settextposition(5, 13);
         // _settextcolor(3);
         // _outtext(guess);
 
-        print_guess(guess, g);
+        print_guess(&cmp, guess, g);
     }
 
     getch();
@@ -139,7 +196,9 @@ static const char *init(void) {
     ans = fopen("answers.txt", "r");
     if (ans != NULL) {
         int line = rand() % count_lines(ans);
-        char *word = get_word(ans, line);
+        // char *word = get_word(ans, line);
+        char *word = "soggy";
+        _strupr(word);
         play(word);
         free(word);
         fclose(ans);
