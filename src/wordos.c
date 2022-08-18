@@ -286,6 +286,15 @@ void compare_guess(int *result, char *guess, char *word, ltr_freq_t *freqs, kbd_
     }
 }
 
+int check_results(int *results) {
+    int matches = 0;
+    for (int i = 0; i < WORD_LEN; i++) {
+        matches += (results[i] == F_MATCH);
+    }
+
+    return (matches == WORD_LEN);
+}
+
 void play(char *word) {
     _settextwindow(1, 1, 25, 80);
     _setbkcolor(7);
@@ -318,7 +327,8 @@ void play(char *word) {
     int cmp[WORD_LEN];
     kbd_t kbd;
     init_kbd(&kbd);
-    for (int g = 0; g < GUESSES; g++) {
+    int g;
+    for (g = 0; g < GUESSES; g++) {
         print_keyboard(&kbd);
         enter_guess(&guess);
 
@@ -328,8 +338,19 @@ void play(char *word) {
 
         compare_guess(&cmp, &guess, word, &temp, &kbd);
         print_guess(&cmp, guess, g);
+
+        if (check_results(&cmp)) {
+            break;
+        }
     }
     print_keyboard(&kbd);
+
+    if (g < GUESSES - 1) {
+        snprintf(title, 35, "You found the word in %d guess%s", g + 1, !g ? "!" : "es!");
+    } else {
+        snprintf(title, 35, "FAILURE! The word was %s!", word);
+    }
+    title_bar(title);
 
     getch();
 }
