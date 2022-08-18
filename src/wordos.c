@@ -6,7 +6,7 @@
 #include <conio.h>
 #include <string.h>
 
-#define DEBUG       1
+#define DEBUG       0
 
 #define WORD_LEN    5
 #define GUESSES     6
@@ -172,7 +172,7 @@ void print_keyboard(kbd_t *kbd) {
 
 void print_guess(int *test_colors, char *guess, int guess_num) {
 
-    // char title[30];
+    char title[30];
     for (int ltr = 0; ltr < WORD_LEN; ltr++) {
         _settextwindow(3 + (guess_num * 4), 31 + (ltr * 4), 5 + (guess_num * 4), 33 + (ltr * 4));
         _setbkcolor(test_colors[ltr]);
@@ -181,8 +181,10 @@ void print_guess(int *test_colors, char *guess, int guess_num) {
         _settextposition(2, 2);
         putch(guess[ltr]);
 
-        // snprintf(title, 30, "You have %d guesses remaining!", 5 - guess_num);
-        // title_bar(title);
+        if (!DEBUG) {
+            snprintf(title, 30, "You have %d guesses remaining!", 5 - guess_num);
+            title_bar(title);
+        }
     }
 }
 
@@ -289,10 +291,13 @@ void play(char *word) {
     _setbkcolor(7);
     _clearscreen(_GWINDOW);
 
-    char title[30];
-    snprintf(title, 30, "The new secret word is %s!", word);
+    char title[35];
+    if (DEBUG) {
+        snprintf(title, 29, "The new secret word is %s!", word);
+    } else {
+        snprintf(title, 35, "WORDOS: Solve for the Secret Word!");
+    }
     title_bar(title);
-    // title_bar("WORDOS: Solve for the Secret Word!");
 
     ltr_freq_t freqs[WORD_LEN];
     init_freqs(&freqs);
