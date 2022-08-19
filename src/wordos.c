@@ -7,7 +7,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#define DEBUG       1
+#define DEBUG       0
 
 #define WORD_LEN    5
 #define GUESSES     6
@@ -114,15 +114,6 @@ void title_bar(char *text, int type) {
     _outtext(text);
 }
 
-int cmp_func(const void *p1, const void *p2) {
-    const char *p1c = (const char *)p1;
-    const char **p2c = (const char **)p2;
-    // char msg[20];
-    // snprintf(msg, 20, "%s <-> %s", p1c, p2c);
-    // log_message(msg, 0);
-    return strcmp(p1c, *p2c);
-}
-
 int check_guess(char *guess) {
 
     char file[18];
@@ -133,28 +124,28 @@ int check_guess(char *guess) {
     int lc = count_lines(gfp);
     char **guesses = malloc(lc * sizeof(char *));
 
+    int valid = 0;
     for (int i = 0; i <= lc; i++) {
         guesses[i] = get_word(gfp, i);
         _strupr(guesses[i]);
+        free(guesses[i]);
+        if (strcmp(guess, guesses[i]) == 0) {
+            valid = 1;
+            break;
+        }
     }
     fclose(gfp);
-
-    char **key;
-    key = (char **)bsearch(guess, guesses, lc, (WORD_LEN + 1) * sizeof(char *),  cmp_func);
-
-    for (int i = 0; i <= lc; i++) {
-        free(guesses[i]);
-    }
     free(guesses);
 
-    if (key == NULL) {
+    if (!valid) {
         struct rccoord old = _gettextposition();
         _settextposition(6, 4);
         _outtext("Not a valid guess!");
         _settextposition(old.row, old.col);
         return 1;
+    } else {
+        return 0;
     }
-    return 0;
 }
 
 void enter_guess(char *guess) {
@@ -175,6 +166,7 @@ void enter_guess(char *guess) {
     int letter = 0;
     int c;
     int loop = 1;
+    int chk_txt = 0;
     _settextposition(4, 10);
     do {
         c = getch();
@@ -204,11 +196,20 @@ void enter_guess(char *guess) {
             _settextposition(4, 10 + letter);
             putch('_');
             _settextposition(4, 10 + letter);
+
+            if (chk_txt) {
+                struct rccoord old = _gettextposition();
+                _settextposition(6, 4);
+                _outtext("                  ");
+                _settextposition(old.row, old.col);
+                chk_txt = 0;
+            }
         }
 
         if ((c == 13) && (letter == WORD_LEN)) {
-            // loop = 0;
+            guess[WORD_LEN] = '\0';
             loop = check_guess(guess);
+            chk_txt = loop;
         }
         
     } while (loop);
@@ -309,21 +310,6 @@ void compare_guess(int *result, char *guess, char *word, ltr_freq_t *freqs, kbd_
                 }
             }
 
-            /*
-                Handle duplicate yellow letters
-                Example word: SOGGY
-                'G' guessed in position 3 or 4 obviously ought to be green
-                'G' in any other position ought to be yellow
-                Once there have been 2 'G's any other that should be yellow ought to be black
-
-                Examples:
-                    GROSS = YBYYB
-                    FLOGS = BBYGY
-                    GROGS = YBYGY
-                    GROGG = YBYGB
-                    FLOSS = BBYYB
-            */
-
             /* Mark as black */
             if (lc == 0) {
                 snprintf(msg, 25, ">no bueno");
@@ -410,7 +396,7 @@ void play(char *word) {
 static const char *init(void) {
     srand(time(NULL));
 
-    FILE *ans, *gfp;
+    FILE *ans;
     ans = fopen("dicts/answers.txt", "r");
     if (ans != NULL) {
         int line = rand() % count_lines(ans);
