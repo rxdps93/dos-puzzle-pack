@@ -4,9 +4,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <conio.h>
+#include <ctype.h>
 #include <string.h>
 
-#define DEBUG       0
+#define DEBUG       1
 
 #define WORD_LEN    5
 #define GUESSES     6
@@ -14,6 +15,10 @@
 #define N_MATCH     0
 #define P_MATCH     6
 #define F_MATCH     2
+
+#define TITLE_BAD   4
+#define TITLE_GOOD  2
+#define TITLE_NTRL  3
 
 const char keys[26] = {
     'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P',
@@ -80,7 +85,76 @@ char *get_word(FILE *fp, int line) {
     fseek(fp, line * 6, SEEK_SET);
     char *word = malloc(6 * sizeof(char));
     fgets(word, 6, fp);
+    word[WORD_LEN] = '\0';
     return word;
+}
+
+void log_message(char *msg, int count) {
+    if (DEBUG) {
+        if (count == 0) {
+            _settextwindow(9, 2, 23, 25);
+            _setbkcolor(4);
+            _clearscreen(_GWINDOW);
+            _settextcolor(15);
+            _settextposition(2, 5);
+            _outtext("Debug Messaging:");
+        }
+
+        _settextposition(4 + count, 2);
+        _outtext(msg);
+    }
+}
+
+void title_bar(char *text, int type) {
+    _settextwindow(1, 1, 1, 80);
+    _setbkcolor(type);
+    _clearscreen(_GWINDOW);
+    _settextcolor(15);
+    _settextposition(1, (80 - strlen(text)) / 2);
+    _outtext(text);
+}
+
+int cmp_func(const void *p1, const void *p2) {
+    const char *p1c = (const char *)p1;
+    const char **p2c = (const char **)p2;
+    // char msg[20];
+    // snprintf(msg, 20, "%s <-> %s", p1c, p2c);
+    // log_message(msg, 0);
+    return strcmp(p1c, *p2c);
+}
+
+int check_guess(char *guess) {
+
+    char file[18];
+    snprintf(file, 18, "dicts/guess_%c.txt", tolower(guess[0]));
+
+    FILE *gfp;
+    gfp = fopen(file, "r");
+    int lc = count_lines(gfp);
+    char **guesses = malloc(lc * sizeof(char *));
+
+    for (int i = 0; i <= lc; i++) {
+        guesses[i] = get_word(gfp, i);
+        _strupr(guesses[i]);
+    }
+    fclose(gfp);
+
+    char **key;
+    key = (char **)bsearch(guess, guesses, lc, (WORD_LEN + 1) * sizeof(char *),  cmp_func);
+
+    for (int i = 0; i <= lc; i++) {
+        free(guesses[i]);
+    }
+    free(guesses);
+
+    if (key == NULL) {
+        struct rccoord old = _gettextposition();
+        _settextposition(6, 4);
+        _outtext("Not a valid guess!");
+        _settextposition(old.row, old.col);
+        return 1;
+    }
+    return 0;
 }
 
 void enter_guess(char *guess) {
@@ -133,22 +207,13 @@ void enter_guess(char *guess) {
         }
 
         if ((c == 13) && (letter == WORD_LEN)) {
-            loop = 0;
+            // loop = 0;
+            loop = check_guess(guess);
         }
         
     } while (loop);
 
     guess[WORD_LEN] = '\0';
-}
-
-void title_bar(char *text) {
-    _settextwindow(1, 1, 1, 80);
-    _setbkcolor(3);
-    _clearscreen(_GWINDOW);
-    _settextcolor(15);
-    // _settextposition(1, 24);
-    _settextposition(1, (80 - strlen(text)) / 2);
-    _outtext(text);
 }
 
 void print_keyboard(kbd_t *kbd) {
@@ -183,24 +248,8 @@ void print_guess(int *test_colors, char *guess, int guess_num) {
 
         if (!DEBUG) {
             snprintf(title, 30, "You have %d guesses remaining!", 5 - guess_num);
-            title_bar(title);
+            title_bar(title, TITLE_NTRL);
         }
-    }
-}
-
-void log_message(char *msg, int count) {
-    if (DEBUG) {
-        if (count == 0) {
-            _settextwindow(9, 2, 23, 25);
-            _setbkcolor(4);
-            _clearscreen(_GWINDOW);
-            _settextcolor(15);
-            _settextposition(2, 5);
-            _outtext("Debug Messaging:");
-        }
-
-        _settextposition(4 + count, 2);
-        _outtext(msg);
     }
 }
 
@@ -306,7 +355,7 @@ void play(char *word) {
     } else {
         snprintf(title, 35, "WORDOS: Solve for the Secret Word!");
     }
-    title_bar(title);
+    title_bar(title, TITLE_NTRL);
 
     ltr_freq_t freqs[WORD_LEN];
     init_freqs(&freqs);
@@ -328,6 +377,7 @@ void play(char *word) {
     kbd_t kbd;
     init_kbd(&kbd);
     int g;
+    int result = 0;
     for (g = 0; g < GUESSES; g++) {
         print_keyboard(&kbd);
         enter_guess(&guess);
@@ -339,18 +389,20 @@ void play(char *word) {
         compare_guess(&cmp, &guess, word, &temp, &kbd);
         print_guess(&cmp, guess, g);
 
-        if (check_results(&cmp)) {
+        result = check_results(&cmp);
+        if (result) {
             break;
         }
     }
     print_keyboard(&kbd);
 
-    if (g < GUESSES - 1) {
+    if (result) {
         snprintf(title, 35, "You found the word in %d guess%s", g + 1, !g ? "!" : "es!");
+        title_bar(title, TITLE_GOOD);
     } else {
         snprintf(title, 35, "FAILURE! The word was %s!", word);
+        title_bar(title, TITLE_BAD);
     }
-    title_bar(title);
 
     getch();
 }
@@ -358,13 +410,14 @@ void play(char *word) {
 static const char *init(void) {
     srand(time(NULL));
 
-    FILE *ans;
-    ans = fopen("answers.txt", "r");
+    FILE *ans, *gfp;
+    ans = fopen("dicts/answers.txt", "r");
     if (ans != NULL) {
         int line = rand() % count_lines(ans);
         // char *word = get_word(ans, line);
         char *word = "soggy";
         _strupr(word);
+
         play(word);
         free(word);
         fclose(ans);
