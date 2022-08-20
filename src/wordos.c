@@ -128,9 +128,14 @@ int check_guess(char *guess) {
     for (int i = 0; i <= lc; i++) {
         guesses[i] = get_word(gfp, i);
         _strupr(guesses[i]);
-        free(guesses[i]);
+
         if (strcmp(guess, guesses[i]) == 0) {
             valid = 1;
+        }
+        
+        free(guesses[i]);
+
+        if (valid) {
             break;
         }
     }
