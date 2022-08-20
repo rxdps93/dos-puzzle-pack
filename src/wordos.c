@@ -132,7 +132,7 @@ int check_guess(char *guess) {
         if (strcmp(guess, guesses[i]) == 0) {
             valid = 1;
         }
-        
+
         free(guesses[i]);
 
         if (valid) {
@@ -398,23 +398,73 @@ void play(char *word) {
     getch();
 }
 
-static const char *init(void) {
+int menu() {
+    /* Shadow */
+    _settextwindow(11, 21, 21, 61);
+    _setbkcolor(0);
+    _clearscreen(_GWINDOW);
+
+    /* Menu */
+    _settextwindow(10, 20, 20, 60);
+    _setbkcolor(1);
+    _clearscreen(_GWINDOW);
+
+    /* Title */
+    _settextcolor(15);
+    _settextposition(1, 1);
+    _outtext("Would you like to play again?");
+
+    /* Options */
+    _settextposition(3, 1);
+    _outtext("[Y]es  [R]eturn to Menu  [Q]uit to DOS");
+
+    /* Read input */
+    int c1 = 0;
+    while (1) {
+
+        if (kbhit()) {
+            c1 = getch();
+
+            if ((c1 == 89) || (c1 == 121)) { // Y or y
+                return 1;
+            }
+
+            if ((c1 == 82) || (c1 == 114)) { // R or r
+                return -1;
+            }
+
+            if ((c1 == 81) || (c1 == 113)) { // Q or q
+                return 0;
+            }
+        }
+    }
+}
+
+static const int init(void) {
     srand(time(NULL));
 
     FILE *ans;
     ans = fopen("dicts/answers.txt", "r");
+    int cont;
     if (ans != NULL) {
         int line = rand() % count_lines(ans);
-        // char *word = get_word(ans, line);
-        char *word = "soggy";
-        _strupr(word);
 
-        play(word);
-        free(word);
+        do {
+            char *word = get_word(ans, line);
+            // char *word = "soggy";
+            _strupr(word);
+
+            play(word);
+            free(word);
+
+            cont = menu();
+
+        } while (cont == 1);
+        
         fclose(ans);
     }
 
-    return "You are now playing WORDOS!";
+    return cont;
 }
 
 static const char *description(void) {

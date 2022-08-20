@@ -7,11 +7,11 @@ typedef struct puzzle {
 } puzzle_t;
 
 struct puzzle_vtable {
-    const char *(*init)(void);
+    const int (*init)(void);
     const char *(*description)(void);
 };
 
-static inline const char *init_puzzle(puzzle_t *puzzle) {
+static inline const int init_puzzle(puzzle_t *puzzle) {
     return puzzle->vtable_->init();
 }
 

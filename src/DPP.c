@@ -158,10 +158,6 @@ int main(void) {
     _setvideomode(_TEXTC80);
     _displaycursor(_GCURSOROFF);
 
-    _settextwindow(1, 1, 25, 80);
-    _setbkcolor(SCREEN_BK);
-    _clearscreen(_GCLEARSCREEN);
-
     puzzle_t wordos  = { WORDOS, "WORDOS" };
     puzzle_t nonogram = { NONOGRAM, "NONOGRAM" };
     puzzle_t mathdoku = { MATHDOKU, "MATHDOKU" };
@@ -174,11 +170,15 @@ int main(void) {
     // column_header();
     // row_header();
 
+    _settextwindow(1, 1, 25, 80);
+    _setbkcolor(SCREEN_BK);
+    _clearscreen(_GCLEARSCREEN);
+
     int option = menu(GAMES, &wordos, &nonogram, &mathdoku);
 
+    int ret = -2;
     if (option < GAMES) {
-        printf("%s\n", init_puzzle(puzzles[option]));
-        // init_puzzle(puzzles[option]);
+        ret = init_puzzle(puzzles[option]);
     }
 
     _displaycursor(_GCURSORON);
@@ -186,5 +186,6 @@ int main(void) {
     _clearscreen(_GCLEARSCREEN);
 
     free(puzzles);
+    printf("%d\n", ret);
     return 0;
 }

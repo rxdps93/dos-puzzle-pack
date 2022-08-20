@@ -1,7 +1,7 @@
 #include "puzzles.h"
 
-static const char *init(void) {
-    return "You are now playing Nonogram!";
+static const int init(void) {
+    return 0;
 }
 
 static const char *description(void) {
